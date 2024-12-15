@@ -79,6 +79,45 @@ let main argv =
         | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
     )
 
+    let editButton = new Button(Text = "Edit", Top = 260, Left = 140, Width = 100)
+    editButton.Click.Add(fun _ ->
+        try
+            let name = nameTextBox.Text
+            let email = emailTextBox.Text
+            let number = numberTextBox.Text
+            let searchValue = searchTextBox.Text
+
+            if String.IsNullOrWhiteSpace(name) || String.IsNullOrWhiteSpace(email) || String.IsNullOrWhiteSpace(number) then
+                MessageBox.Show("Please fill all fields to update.") |> ignore
+            else
+                let connectionString = "Server=localhost;Database=tester;User Id=root;Password=;"
+                use connection = new MySqlConnection(connectionString)
+                connection.Open()
+
+                let queryCheckNumber = "SELECT number FROM data_of_a7 WHERE number = @searchNumber"
+                use commandCheckNumber = new MySqlCommand(queryCheckNumber, connection)
+                commandCheckNumber.Parameters.AddWithValue("@searchNumber", Int32.Parse(searchValue)) |> ignore
+                use readerCheck = commandCheckNumber.ExecuteReader()
+
+                if readerCheck.Read() && readerCheck.GetInt32(0) <> Int32.Parse(number) then
+                    MessageBox.Show("Cannot edit the ID.") |> ignore
+                else
+                    readerCheck.Close()
+
+                    let updateQuery = "UPDATE data_of_a7 SET name = @name, email = @email WHERE number = @searchNumber"
+                    use updateCommand = new MySqlCommand(updateQuery, connection)
+                    updateCommand.Parameters.AddWithValue("@name", name) |> ignore
+                    updateCommand.Parameters.AddWithValue("@email", email) |> ignore
+                    updateCommand.Parameters.AddWithValue("@searchNumber", Int32.Parse(searchValue)) |> ignore
+
+                    let rowsAffected = updateCommand.ExecuteNonQuery()
+                    if rowsAffected > 0 then
+                        MessageBox.Show("Data updated successfully!") |> ignore
+                    else
+                        MessageBox.Show("Failed to update data.") |> ignore
+        with
+        | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
+    )
    
 
     // إضافة كل العناصر للنافذة
