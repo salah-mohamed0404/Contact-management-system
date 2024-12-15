@@ -21,6 +21,35 @@ let main argv =
     let searchLabel = new Label(Text = "Search:", AutoSize = true, Top = 200, Left = 20)
     let searchTextBox = new TextBox(Width = 200, Top = 200, Left = 80)
 
+    let searchButton = new Button(Text = "Search", Top = 200, Left = 300, Width = 100)
+    searchButton.Click.Add(fun _ ->
+        try
+            let searchValue = searchTextBox.Text
+            if String.IsNullOrWhiteSpace(searchValue) then
+                MessageBox.Show("Please enter a number to search.") |> ignore
+            else
+                let connectionString = "Server=localhost;Database=tester;User Id=root;Password=;"
+                use connection = new MySqlConnection(connectionString)
+                connection.Open()
+
+                let query = "SELECT name, number, email FROM data_of_a7 WHERE number = @number"
+                use command = new MySqlCommand(query, connection)
+                command.Parameters.AddWithValue("@number", Int32.Parse(searchValue)) |> ignore
+
+                use reader = command.ExecuteReader()
+
+                if reader.Read() then
+                    nameTextBox.Text <- reader.GetString(0)
+                    numberTextBox.Text <- reader.GetInt32(1).ToString()
+                    emailTextBox.Text <- reader.GetString(2)
+                else
+                    MessageBox.Show("Not found any data about this input.") |> ignore
+
+                reader.Close()
+        with
+        | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
+    )
+
    
 
    
