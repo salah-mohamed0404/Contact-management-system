@@ -17,6 +17,28 @@ let main argv =
     let emailLabel = new Label(Text = "Email:", AutoSize = true, Top = 100, Left = 20)
     let emailTextBox = new TextBox(Width = 200, Top = 100, Left = 80)
 
+    
+// Function to load data into DataGridView
+    let loadData () =
+        try
+            let connectionString = "Server=localhost;Database=tester;User Id=root;Password=;"
+            use connection = new MySqlConnection(connectionString)
+            connection.Open()
+
+            let query = "SELECT number, name, email FROM data_of_a7"
+            use adapter = new MySqlDataAdapter(query, connection)
+            let table = new DataTable()
+            adapter.Fill(table) |> ignore
+            dataGridView.DataSource <- table
+        with
+        | ex -> MessageBox.Show($"Error loading data: {ex.Message}") |> ignore
+
+    // Refresh button
+    let refreshButton = new Button(Text = "Refresh", Top = 230, Left = 620, Width = 100)
+    refreshButton.Click.Add(fun _ ->
+        loadData() // Reload data after adding
+    )
+
     // زر "Search"
     let searchLabel = new Label(Text = "Search:", AutoSize = true, Top = 200, Left = 20)
     let searchTextBox = new TextBox(Width = 200, Top = 200, Left = 80)
