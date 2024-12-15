@@ -50,7 +50,34 @@ let main argv =
         | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
     )
 
-   
+    let addButton = new Button(Text = "Add", Top = 260, Left = 260, Width = 100)
+    addButton.Click.Add(fun _ ->
+        try
+            let name = nameTextBox.Text
+            let email = emailTextBox.Text
+            let number = numberTextBox.Text
+
+            if String.IsNullOrWhiteSpace(name) || String.IsNullOrWhiteSpace(email) || String.IsNullOrWhiteSpace(number) then
+                MessageBox.Show("Please fill all fields.") |> ignore
+            else
+                let connectionString = "Server=localhost;Database=tester;User Id=root;Password=;"
+                use connection = new MySqlConnection(connectionString)
+                connection.Open()
+
+                let query = "INSERT INTO data_of_a7 (name, number, email) VALUES (@name, @number, @email)"
+                use command = new MySqlCommand(query, connection)
+                command.Parameters.AddWithValue("@name", name) |> ignore
+                command.Parameters.AddWithValue("@number", Int32.Parse(number)) |> ignore
+                command.Parameters.AddWithValue("@email", email) |> ignore
+
+                let rowsAffected = command.ExecuteNonQuery()
+                if rowsAffected > 0 then
+                    MessageBox.Show("Data added successfully!") |> ignore
+                else
+                    MessageBox.Show("Failed to add data.") |> ignore
+        with
+        | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
+    )
 
    
 
