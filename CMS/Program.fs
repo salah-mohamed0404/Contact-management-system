@@ -1,6 +1,7 @@
 ﻿open System
 open System.Windows.Forms
 open MySql.Data.MySqlClient
+open System.Data
 
 [<EntryPoint>]
 let main argv =
@@ -17,6 +18,10 @@ let main argv =
     let emailLabel = new Label(Text = "Email:", AutoSize = true, Top = 100, Left = 20)
     let emailTextBox = new TextBox(Width = 200, Top = 100, Left = 80)
 
+    // DataGridView to display data
+    let dataGridView = new DataGridView(Width=350, Height = 200,Top = 20,Left=500)
+    dataGridView.ReadOnly <- true
+    dataGridView.AutoSizeColumnsMode <- DataGridViewAutoSizeColumnsMode.Fill
     
 // Function to load data into DataGridView
     let loadData () =
@@ -42,6 +47,46 @@ let main argv =
     // زر "Search"
     let searchLabel = new Label(Text = "Search:", AutoSize = true, Top = 200, Left = 20)
     let searchTextBox = new TextBox(Width = 200, Top = 200, Left = 80)
+    let searchNumButton = new Button(Text = "Search", Top = 20, Left = 370, Width = 100)
+    let searchNTextBox = new TextBox(Width = 210, Top = 20, Left = 150,MaxLength=11)
+
+    
+    searchNumButton.Click.Add(fun _ ->
+        try
+            let searchValue = searchNTextBox.Text
+            if String.IsNullOrWhiteSpace(searchValue) then
+                MessageBox.Show("Please enter a number to search.") |> ignore
+            else
+                let connectionString = "Server=localhost;Database=tester;User Id=root;Password=;"
+                use connection = new MySqlConnection(connectionString)
+                connection.Open()
+
+                let query = "SELECT name, number, email FROM data_of_a7 WHERE number = @number"
+                use command = new MySqlCommand(query, connection)
+                command.Parameters.AddWithValue("@number", Int32.Parse(searchValue)) |> ignore
+            
+
+                use reader = command.ExecuteReader()
+
+                if reader.Read() then
+                    nameTextBox.Text <- reader.GetString(0)
+                    numberTextBox.Text <- reader.GetInt32(1).ToString()
+                    emailTextBox.Text <- reader.GetString(2)
+                else
+                    MessageBox.Show("this Number Not Exists") |> ignore
+
+                reader.Close()
+                use command = new MySqlDataAdapter(query, connection)
+                command.SelectCommand.Parameters.AddWithValue("@number", Int32.Parse(searchValue)) |> ignore
+                let table = new DataTable()
+                command.Fill(table) |> ignore
+
+                if table.Rows.Count > 0 then
+                    dataGridView.DataSource <- table
+        with
+        | ex -> MessageBox.Show($"Error: {ex.Message}") |> ignore
+    )
+
 
     let searchButton = new Button(Text = "Search", Top = 200, Left = 300, Width = 100)
     searchButton.Click.Add(fun _ ->
